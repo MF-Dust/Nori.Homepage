@@ -121,7 +121,10 @@ try {
   assert.match(await page.locator('#preview-response').innerText(), /晚安/);
   assert.equal(await page.locator('.desktop-scene').getAttribute('data-moment'), 'night');
   assert.equal(await page.locator('#scene-counter').innerText(), '03 / 03');
+  assert.equal(await page.locator('#scene-time').innerText(), '23:41');
   assert.equal(await page.locator('[aria-pressed="true"]').count(), 1);
+  // Ambient loops in sections scrolled out of view are paused.
+  await page.waitForFunction(() => document.querySelector('.hero').hasAttribute('data-offscreen'));
   await page.evaluate(() => Promise.all(document.querySelector('#preview-chat').getAnimations().map((animation) => animation.finished)));
   await page.screenshot({ path: resolve(root, '.verification/1440-motion-preview.png') });
 

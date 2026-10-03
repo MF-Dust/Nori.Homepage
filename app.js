@@ -134,15 +134,32 @@ const revealObserver = new IntersectionObserver((entries) => {
     if (!isIntersecting) continue;
     revealObserver.unobserve(target);
     if (reducedMotion.matches || navigationTransition) continue;
-    const stagger = target.matches('.feature-card, .download-card')
-      ? [...target.parentElement.children].indexOf(target) % 3 * 65 : 0;
+    const stagger = target.matches('.feature, .download-card, .phase')
+      ? [...target.parentElement.children].indexOf(target) % 3 * 70 : 0;
     target.animate([{ opacity: 0, translate: '0 18px' }, { opacity: 1, translate: '0 0' }], {
-      duration: 620, delay: stagger, easing, fill: 'backwards',
+      duration: 660, delay: stagger, easing, fill: 'backwards',
     });
   }
 }, { threshold: .08, rootMargin: '0px 0px -30px 0px' });
-document.querySelectorAll('.about-art, .about-copy, .section-heading, .feature-card, .desktop-window, .preview-controls, .download-intro, .download-card, .getting-started, .faq-heading, .faq-list, .community-section')
+document.querySelectorAll('.emergence, .about-copy, .phase, .section-heading, .feature, .desktop-window, .preview-controls, .download-intro, .download-card, .steps, .faq-heading, .faq-list, .community-card')
   .forEach((element) => revealObserver.observe(element));
+
+// Decorative loops (light rays, motes, currents, waveform) only run while their section is on screen.
+const ambientObserver = new IntersectionObserver((entries) => {
+  for (const { target, isIntersecting } of entries) target.toggleAttribute('data-offscreen', !isIntersecting);
+});
+document.querySelectorAll('.hero, .ribbon, .about, .features').forEach((element) => ambientObserver.observe(element));
+
+// A soft light follows the pointer across cards; touch and coarse pointers keep the static style.
+if (matchMedia('(hover: hover) and (pointer: fine)').matches) {
+  document.addEventListener('pointermove', (event) => {
+    const card = event.target instanceof Element && event.target.closest('.card');
+    if (!card) return;
+    const bounds = card.getBoundingClientRect();
+    card.style.setProperty('--mx', event.clientX - bounds.left + 'px');
+    card.style.setProperty('--my', event.clientY - bounds.top + 'px');
+  }, { passive: true });
+}
 
 reducedMotion.addEventListener('change', () => {
   if (reducedMotion.matches) {
@@ -158,6 +175,7 @@ const scenes = {
     caption: '新的故事，从这里开始。',
     label: 'A LITTLE LIGHT',
     note: '新的故事，从你好开始。',
+    time: '09:24',
   },
   break: {
     prompt: '今天有点累，想休息一下。',
@@ -165,6 +183,7 @@ const scenes = {
     caption: '休息一下，也没有关系。',
     label: 'A LITTLE BREAK',
     note: '今天，也慢慢来。',
+    time: '15:30',
   },
   night: {
     prompt: '要睡了。晚安，Nori。',
@@ -172,6 +191,7 @@ const scenes = {
     caption: '明天，又是一次小小的重逢。',
     label: 'A QUIET NIGHT',
     note: '留一束微光，等明天。',
+    time: '23:41',
   },
 };
 const sceneButtons = [...document.querySelectorAll('[data-scene]')];
@@ -184,6 +204,7 @@ const desktopNote = document.querySelector('.desktop-note');
 const momentLabel = document.querySelector('#moment-label');
 const momentNote = document.querySelector('#moment-note');
 const sceneCounter = document.querySelector('#scene-counter');
+const sceneTime = document.querySelector('#scene-time');
 let selectedScene = 0;
 
 sceneButtons.forEach((button, index) => {
@@ -204,6 +225,7 @@ sceneButtons.forEach((button, index) => {
     momentLabel.textContent = scene.label;
     momentNote.textContent = scene.note;
     sceneCounter.textContent = String(index + 1).padStart(2, '0') + ' / 03';
+    sceneTime.textContent = scene.time;
     desktopScene.dataset.moment = button.dataset.scene;
     for (const element of [previewChat, desktopNote]) {
       element.getAnimations().forEach((animation) => animation.cancel());
