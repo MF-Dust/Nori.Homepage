@@ -8,6 +8,17 @@ const html = await readFile(new URL('index.html', root), 'utf8');
 const css = await readFile(new URL('styles.css', root), 'utf8');
 const script = await readFile(new URL('app.js', root), 'utf8');
 
+test('Google AdSense loader appears exactly once in the document head', () => {
+  const head = html.match(/<head>([\s\S]*?)<\/head>/)?.[1];
+  assert.ok(head, 'missing document head');
+  const loaders = [...html.matchAll(/<script\b[^>]*pagead2\.googlesyndication\.com\/pagead\/js\/adsbygoogle\.js[^>]*><\/script>/g)];
+  assert.equal(loaders.length, 1, 'AdSense must be loaded only once');
+  assert.ok(head.includes(loaders[0][0]), 'AdSense loader must be in the document head');
+  assert.match(loaders[0][0], /\basync\b/);
+  assert.match(loaders[0][0], /\bclient=ca-pub-2067584938190790/);
+  assert.match(loaders[0][0], /\bcrossorigin="anonymous"/);
+});
+
 test('all local resources exist and fragments resolve', async () => {
   const ids = [...html.matchAll(/\bid="([^"]+)"/g)].map((match) => match[1]);
   assert.equal(new Set(ids).size, ids.length, 'duplicate HTML id');
